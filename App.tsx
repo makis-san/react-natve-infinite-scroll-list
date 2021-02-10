@@ -11,11 +11,8 @@ export default function App() {
 
   useEffect(() => {
     setLoading(true);
-    getData();
-    return () => {
-
-    }
-  }, [currentPage]);
+    getData(currentPage);
+  }, []);
 
   const renderFooter = () => {
     return(
@@ -26,28 +23,27 @@ export default function App() {
     )
   }
 
-  const getData = async () => {
-    const options:any = {
-      method: 'GET',
-      url: 'url'+currentPage,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        userGroup: '1',
-        Authorization: 'Bearer Token',
-      }
+  const getData = async (page: number) => {
+    if (loading) return;
+    if (!lastPage) return setLoading(false);
+
+    setLoading(true);
+
+    const data = await axios.get('url'); //<-- do api request
+    if (!data) {
+        setLast(true);
+        setLoading(false);
+        return;
     };
-    const data = await axios.request(options).then((res:any) => {
-      setData(listData.concat(res.data.data));
-      setLoading(false);
-    }).catch((error) => setLast(true));
-    return data;
-  }
+
+    setPage(page);
+    setData(listData.concat(data));
+    return setLoading(false);
+}
   
   const handleLoadMore = () => {
-    console.log("handleLoadMore");
-    setLoading(true);
-    if(!lastPage) return setPage(currentPage+1);
-  }
+     getData(currentPage+1);
+  };
 
   return (
       <FlatList
@@ -56,8 +52,8 @@ export default function App() {
         renderItem={(data) => <Item data={data}/>}
         keyExtractor={(item,index) => index.toString()}
         ListFooterComponent={renderFooter}
+        onEndReachedThreshold={0.1}
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0}
       />
   );
 }
